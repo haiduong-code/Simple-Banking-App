@@ -1,0 +1,16 @@
+# Môi trường
+.env
+.env.local
+.env.development
+.env.production
+
+# Node modules
+node_modules/
+
+# Build files
+dist/
+build/
+De_bai_Simple_Banking_App.docx
+claude.md
+9
+18
