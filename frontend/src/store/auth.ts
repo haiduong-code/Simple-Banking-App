@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { SafeUser } from '../types/auth';
-import { tokenStorage } from '../lib/api';
+import { tokenStorage } from '../lib/token-storage';
 
 interface AuthState {
   token: string | null;

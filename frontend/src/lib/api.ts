@@ -1,12 +1,6 @@
 import axios from 'axios';
-
-const TOKEN_KEY = 'banking_token';
-
-export const tokenStorage = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (t: string) => localStorage.setItem(TOKEN_KEY, t),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
-};
+import { useAuthStore } from '../store/auth';
+import { tokenStorage } from './token-storage';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000',
@@ -30,7 +24,7 @@ api.interceptors.response.use(
     const url: string = error?.config?.url ?? '';
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
     if (status === 401 && !isAuthEndpoint) {
-      tokenStorage.clear();
+      useAuthStore.getState().logout();
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

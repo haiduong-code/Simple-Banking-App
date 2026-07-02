@@ -1,17 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { meApi } from '../api/auth';
 import { useAuthStore } from '../store/auth';
+import { getMyAccount } from '../api/accounts';
+
+function formatMoney(value: string): string {
+  const [whole, decimal = ''] = value.split('.');
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const significantDecimal = decimal.replace(/0+$/, '');
+  return significantDecimal ? `${grouped},${significantDecimal}` : grouped;
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
-  // Goi route bao ve de xac nhan JWT con hieu luc
-  const { data: me, isLoading, isError } = useQuery({
-    queryKey: ['me'],
-    queryFn: meApi,
+  // Gọi API lấy dữ liệu thẻ ngân hàng (Số dư)
+  const {
+    data: account,
+    isLoading: accountLoading,
+    isError: accountError,
+  } = useQuery({
+    queryKey: ['my-account'],
+    queryFn: getMyAccount,
   });
 
   const onLogout = () => {
@@ -28,44 +39,62 @@ export default function DashboardPage() {
             onClick={onLogout}
             className="text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg px-4 py-2 transition"
           >
-            Dang xuat
+            Đăng xuất
           </button>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-base font-semibold text-slate-700 mb-4">Thong tin tai khoan</h2>
 
-          {isLoading && <p className="text-slate-500">Dang tai...</p>}
-          {isError && <p className="text-red-600">Khong tai duoc thong tin nguoi dung.</p>}
+        {/* --- KHU VỰC THẺ NGÂN HÀNG (MỚI) --- */}
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl shadow-lg p-6 text-white">
+          <h2 className="text-sm font-semibold opacity-80 mb-6">THẺ GIAO DỊCH</h2>
+
+          {accountLoading ? (
+            <div className="animate-pulse flex space-x-4">
+              <div className="h-4 bg-white/30 rounded w-1/4"></div>
+            </div>
+          ) : accountError ? (
+            <p className="text-red-200 text-sm">Không tải được thông tin tài khoản.</p>
+          ) : account ? (
+            <div>
+              <div className="text-3xl font-bold tracking-widest mb-2 font-mono">
+                {account.accountNumber.replace(/(.{4})/g, '$1 ').trim()}
+              </div>
+              <div className="mt-8 flex justify-between items-end">
+                <div>
+                  <div className="text-xs opacity-70 mb-1">SỐ DƯ KHẢ DỤNG</div>
+                  <div className="text-2xl font-bold">
+                    {formatMoney(account.balance)}{' '}
+                    <span className="text-lg">{account.currency}</span>
+                  </div>
+                </div>
+                <div className="uppercase opacity-90 font-medium tracking-wider">
+                  {user?.fullName}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {/* --------------------------------- */}
+
+        {/* Khu vực thông tin cá nhân cũ */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-slate-700 mb-4">Thông tin hồ sơ</h2>
 
           {user && (
             <dl className="grid grid-cols-3 gap-y-3 text-sm">
-              <dt className="text-slate-500">Ho ten</dt>
+              <dt className="text-slate-500">Họ tên</dt>
               <dd className="col-span-2 font-medium text-slate-800">{user.fullName}</dd>
 
               <dt className="text-slate-500">Email</dt>
               <dd className="col-span-2 font-medium text-slate-800">{user.email}</dd>
 
-              <dt className="text-slate-500">Vai tro</dt>
+              <dt className="text-slate-500">Vai trò</dt>
               <dd className="col-span-2 font-medium text-slate-800">{user.role}</dd>
-
-              <dt className="text-slate-500">Trang thai</dt>
-              <dd className="col-span-2 font-medium text-slate-800">{user.status}</dd>
             </dl>
           )}
-
-          {me && (
-            <p className="mt-4 text-xs text-emerald-600">
-              JWT hop le — xac thuc qua /auth/me thanh cong.
-            </p>
-          )}
         </div>
-
-        <p className="text-sm text-slate-400">
-          So du &amp; chuyen khoan se duoc bo sung o Giai doan 3 va 4.
-        </p>
       </main>
     </div>
   );
