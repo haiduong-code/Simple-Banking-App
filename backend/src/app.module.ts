@@ -20,6 +20,7 @@ import * as Joi from 'joi';
         DB_NAME: Joi.string().required(),
         JWT_SECRET: Joi.string().required(),
         JWT_EXPIRES_IN: Joi.string().default('1d'),
+        CORS_ORIGIN: Joi.string().uri().default('http://localhost:5173'),
         PORT: Joi.number().default(3000),
       }),
     }),

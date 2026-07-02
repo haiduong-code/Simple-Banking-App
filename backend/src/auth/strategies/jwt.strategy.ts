@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserStatus } from '../../users/entities/user.entity';
+import { User, UserStatus } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/users.service';
 
 /** Payload mã hóa trong JWT. */
@@ -37,8 +37,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * và chưa bị khóa (token cũ không qua mặt được trạng thái mới).
    */
   async validate(payload: JwtPayload): Promise<AuthUser> {
-    const user = await this.usersService.findById(payload.sub).catch(() => null);
-    if (!user) {
+    let user: User;
+    try {
+      user = await this.usersService.findById(payload.sub);
+    } catch {
       throw new UnauthorizedException('Token không hợp lệ');
     }
     if (user.status === UserStatus.LOCKED) {

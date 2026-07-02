@@ -8,7 +8,6 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ColumnNumericTransformer } from '../../common/transformers/column-numeric.transformer';
 import { Transaction } from '../../transactions/entities/transaction.entity';
 import { User } from '../../users/entities/user.entity';
 
@@ -33,15 +32,14 @@ export class Account {
   @Column({ name: 'account_number', type: 'varchar', length: 32, unique: true })
   accountNumber: string;
 
-  // Số dư — numeric(18,2), KHÔNG dùng float. Transformer ép về number ở tầng app.
+  // Giữ numeric dưới dạng string ở tầng app để không mất độ chính xác của tiền.
   @Column({
     type: 'numeric',
     precision: 18,
     scale: 2,
-    default: 0,
-    transformer: new ColumnNumericTransformer(),
+    default: '0.00',
   })
-  balance: number;
+  balance: string;
 
   @Column({ type: 'varchar', length: 3, default: 'VND' })
   currency: string;

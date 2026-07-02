@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 
 const BCRYPT_SALT_ROUNDS = 10;
@@ -18,7 +18,9 @@ export class UsersService {
   ) {}
 
   findByEmail(email: string): Promise<User | null> {
-    return this.userRepo.findOne({ where: { email: email.toLowerCase() } });
+    return this.userRepo.findOne({
+      where: { email: email.trim().toLowerCase() },
+    });
   }
 
   async findById(id: string): Promise<User> {
@@ -33,24 +35,28 @@ export class UsersService {
    * Tạo user mới: hash mật khẩu bằng bcrypt, không lưu plaintext.
    * Ném ConflictException nếu email đã tồn tại.
    */
-  async create(input: {
-    fullName: string;
-    email: string;
-    password: string;
-  }): Promise<User> {
-    const email = input.email.toLowerCase();
-    const existed = await this.findByEmail(email);
+  async create(
+    input: {
+      fullName: string;
+      email: string;
+      password: string;
+    },
+    manager?: EntityManager,
+  ): Promise<User> {
+    const userRepo = manager?.getRepository(User) ?? this.userRepo;
+    const email = input.email.trim().toLowerCase();
+    const existed = await userRepo.findOne({ where: { email } });
     if (existed) {
       throw new ConflictException('Email đã được sử dụng');
     }
 
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
-    const user = this.userRepo.create({
+    const user = userRepo.create({
       fullName: input.fullName,
       email,
       passwordHash,
     });
-    return this.userRepo.save(user);
+    return userRepo.save(user);
   }
 
   /** So khớp mật khẩu plaintext với hash đã lưu. */

@@ -1,4 +1,11 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -28,7 +35,9 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Thông tin user từ JWT (kiểm tra route được bảo vệ)' })
+  @ApiOperation({
+    summary: 'Thông tin user từ JWT (kiểm tra route được bảo vệ)',
+  })
   me(@CurrentUser() user: AuthUser) {
     return user;
   }

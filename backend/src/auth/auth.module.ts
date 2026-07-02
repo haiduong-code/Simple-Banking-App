@@ -20,7 +20,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         secret: config.get<string>('JWT_SECRET'),
         // expiresIn nhan chuoi dang '1d','3600s'... ep kieu cho khop typings @nestjs/jwt v11
         signOptions: {
-          expiresIn: config.get<string>('JWT_EXPIRES_IN', '1d') as unknown as number,
+          expiresIn: config.get<string>(
+            'JWT_EXPIRES_IN',
+            '1d',
+          ) as unknown as number,
         },
       }),
     }),

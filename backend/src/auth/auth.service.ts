@@ -1,8 +1,6 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { User, UserStatus } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -30,6 +28,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   /** Loại bỏ trường nhạy cảm trước khi trả ra response. */
@@ -57,14 +56,20 @@ export class AuthService {
    * rồi trả JWT để đăng nhập ngay.
    */
   async register(dto: RegisterDto): Promise<AuthResult> {
-    const user = await this.usersService.create({
-      fullName: dto.fullName,
-      email: dto.email,
-      password: dto.password,
-    });
+    const user = await this.dataSource.transaction(async (manager) => {
+      const createdUser = await this.usersService.create(
+        {
+          fullName: dto.fullName.trim(),
+          email: dto.email.trim(),
+          password: dto.password,
+        },
+        manager,
+      );
 
-    // Mỗi user có tối thiểu 1 tài khoản ngân hàng.
-    await this.accountsService.createForUser(user.id);
+      // User và tài khoản mặc định phải cùng thành công hoặc cùng rollback.
+      await this.accountsService.createForUser(createdUser.id, '0.00', manager);
+      return createdUser;
+    });
 
     return {
       accessToken: this.signToken(user),
